@@ -1,5 +1,4 @@
 function Calc () {
-    "use strict"
     
     var result = 0;
 

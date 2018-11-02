@@ -252,6 +252,7 @@ class Calculator extends React.Component {
                     displayStr: ''
                 });
                 break;
+            default:
         }
     }
 
