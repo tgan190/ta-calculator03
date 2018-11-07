@@ -53,6 +53,8 @@ class Calculator extends React.Component {
             this.result = this.calc.getResult();
         }
 
+        // if no operand ignore the operator
+
     }
 
     operandFn (digitStr, displayStr) {
@@ -64,6 +66,13 @@ class Calculator extends React.Component {
                 this.operand = '';
             }
           }
+
+          var len = displayStr.length;
+          if (displayStr.substring(len-1) === ')') {
+              this.do_cal();
+              this.operand = '';
+              this.operator = 'x'
+          }
           this.operand = this.operand.concat(digitStr);
           this.externalDisplayStr = displayStr.concat(digitStr);
           this.setState({
@@ -72,15 +81,38 @@ class Calculator extends React.Component {
     }
 
     operatorFn (operatorStr, displayStr) {
-        if (this.operand) {
-          this.do_cal();
-          this.operand = '';
+        if(!['+','-','x','/'].includes(displayStr[displayStr.length - 1])){
+            if (this.operand) {
+                this.do_cal();
+                this.operand = '';
+                this.operator = operatorStr; 
+                if (displayStr) {
+                  this.externalDisplayStr = displayStr.concat(operatorStr);
+                  this.setState({
+                    displayStr: displayStr.concat(operatorStr)
+                  });
+                } else {
+                  this.externalDisplayStr = this.result.toString().concat(operatorStr);
+                  this.setState({
+                      displayStr: this.externalDisplayStr
+                  });
+                }     
+                
+            } else {
+                  if(['+','-'].includes(operatorStr)) {
+                      this.operator = operatorStr;        
+                      this.externalDisplayStr = displayStr.concat(operatorStr);
+                      this.setState({
+                          displayStr: displayStr.concat(operatorStr)
+                      });
+                  }
+
+                  // otherwise ignore the operator
+            }
         }
-        this.operator = operatorStr;        
-        this.externalDisplayStr = displayStr.concat(operatorStr);
-        this.setState({
-          displayStr: displayStr.concat(operatorStr)
-        });
+        
+        // otherwise ignore the operator
+        
     }
 
     handleClick(i) {
@@ -143,7 +175,11 @@ class Calculator extends React.Component {
                 this.calc.add(tmpResult);
                 this.operator = current.tmpOperator;
                 this.do_cal();
-                this.operand = '';
+
+                this.result = this.calc.equals();
+                this.operand = this.result.toString();
+
+                // this.operand = '';
                 this.operator = '';        
                 this.externalDisplayStr = displayStr.concat(')');
                 this.setState({
@@ -188,7 +224,6 @@ class Calculator extends React.Component {
 
             case 11:
                 this.operatorFn('x', displayStr);
-                // otherwise ignore the operator
                 break;
 
             case 12:
@@ -205,7 +240,6 @@ class Calculator extends React.Component {
 
             case 15:
                 this.operatorFn('/', displayStr);
-                // otherwise ignore the operator
                 break;
 
             case 16:
@@ -217,17 +251,19 @@ class Calculator extends React.Component {
                 break;
             
             case 18:
-                this.do_cal();            
-                this.externalDisplayStr = displayStr.concat('=');
-                this.result = this.calc.equals();
-                // this.operand = '';
-                this.operand = this.result.toString();
-                this.operator = '+';
-                this.history = [];
-                this.setState({
-                    displayStr: ''
-                });
-                this.openB = 0;
+                if (this.externalDisplayStr[this.externalDisplayStr.length - 1] !== '=') {
+                    this.do_cal();            
+                    this.externalDisplayStr = displayStr.concat('=');
+                    this.result = this.calc.equals();
+                    // this.operand = '';
+                    this.operand = this.result.toString();
+                    this.operator = '+';
+                    this.history = [];
+                    this.setState({
+                        displayStr: ''
+                    });
+                    this.openB = 0;
+                }      
                 break;
             default:
         }
