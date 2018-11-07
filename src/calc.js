@@ -61,6 +61,10 @@ function Calc () {
     this.reset = function() {
         result = 0;
     };
+
+    this.getResult = function() {
+        return result;
+    }
 }
 
 export default Calc;

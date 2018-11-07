@@ -6,24 +6,30 @@ import CalcDisplay from './CalcDisplay';
 class Calculator extends React.Component {
 
     constructor(props) {
-      super(props);
-      this.state = {
-        displayStr: ''
-      };
+        super(props);
+        this.state = {
+            displayStr: ''
+        };
 
-      this.squares = ['C', '(',')', '+',
+        this.squares = ['C', '(',')', '+',
         '7', '8', '9', '-',
         '4', '5', '6', 'x',
         '1', '2', '3', '/',
         '0', '.', '=']
 
         this.calc = new Calc();
+
+        this.initializeVar();
+    
+    }
+
+    initializeVar () {
         this.operand = '';
         this.operator = '+';
         this.result = 0;
         this.externalDisplayStr = '';
         this.history = [];
-    
+        this.openB = 0;
     }
 
     do_cal() {
@@ -35,25 +41,51 @@ class Calculator extends React.Component {
                 this.calc.add(operand);
             } else {
                 if (this.operator === '+') {
-                  this.calc.add(operand);
+                  this.calc.add(operand);      
                 } else if (this.operator === '-') {
-                  this.calc.subtract(operand);
+                  this.calc.subtract(operand);           
                 } else if (this.operator === 'x') {
-                    this.calc.multiply(operand);
+                   this.calc.multiply(operand);    
                 } else if (this.operator === '/') {
                     this.calc.divide(operand);
                 }
             }
+            this.result = this.calc.getResult();
         }
+
+    }
+
+    operandFn (digitStr, displayStr) {
+          if (!displayStr) {
+            this.result = 0;
+            if (digitStr === '.') {
+                this.operand = '0';
+            } else {
+                this.operand = '';
+            }
+          }
+          this.operand = this.operand.concat(digitStr);
+          this.externalDisplayStr = displayStr.concat(digitStr);
+          this.setState({
+            displayStr: displayStr.concat(digitStr)
+          });
+    }
+
+    operatorFn (operatorStr, displayStr) {
+        if (this.operand) {
+          this.do_cal();
+          this.operand = '';
+        }
+        this.operator = operatorStr;        
+        this.externalDisplayStr = displayStr.concat(operatorStr);
+        this.setState({
+          displayStr: displayStr.concat(operatorStr)
+        });
     }
 
     handleClick(i) {
 
-        var displayStr = this.state.displayStr;
-        if (displayStr.length === 0) {
-            this.result = 0;
-        }
-        
+        var displayStr = this.state.displayStr;      
     
           switch (i) {
             case 0:
@@ -62,195 +94,140 @@ class Calculator extends React.Component {
                 displayStr : ''
               });
            
-              this.externalDisplayStr = '';
-              this.result = 0;
-              this.operand = '';
-              this.operator = '+';
-              this.history = [];
+              this.initializeVar();
+             
               break;
+
             case 1:
-            
-              if (displayStr.length === 0) {
+              if (!displayStr) {
                   this.calc.add(1);
                   this.operator = 'x';
+                  this.result = 0;
                 
               } else {
                   var len = displayStr.length;
+                  
                   if (!['+','-','x','/'].includes(displayStr.substring(len-1))) {
                     this.do_cal();
                     this.operator = 'x'
                   }
               }
                           
+              if (displayStr.substring(len-1) === '(') {
+                  this.history.push({
+                    tmpResult: 1, tmpOperator: 'x'
+                  })
+              }  else {
+                    this.history.push({
+                    tmpResult: this.calc.equals(), tmpOperator: this.operator
+                  })
+              }
+             
               this.externalDisplayStr = displayStr.concat('(');
-              this.history.push({
-                tmpResult: this.calc.equals(), tmpOperator: this.operator
-                
-              })
-              
               this.setState({
                     displayStr: displayStr.concat('(')
               });
               this.operator = '+'
               this.operand = '';
+              this.openB++; 
               break;
+
             case 2:
-             
-              this.do_cal();
-              this.operand = this.calc.equals();
               
-              const current = this.history.pop();
-              var tmpResult = current.tmpResult;
-              this.calc.add(tmpResult);
-              this.operator = current.tmpOperator;
-              this.do_cal();
-              this.operand = '';
-              this.operator = '';        
-              this.externalDisplayStr = displayStr.concat(')');
-              this.setState({
-                    displayStr: displayStr.concat(')')
-              });
+              if (this.openB > 0 ) {
+                this.do_cal();
+                // this.operand = this.calc.equals();
+                this.operand = this.calc.equals().toString();                
+                const current = this.history.pop();
+                var tmpResult = current.tmpResult;
+                this.calc.add(tmpResult);
+                this.operator = current.tmpOperator;
+                this.do_cal();
+                this.operand = '';
+                this.operator = '';        
+                this.externalDisplayStr = displayStr.concat(')');
+                this.setState({
+                        displayStr: displayStr.concat(')')
+                });
+                this.openB--;
+              }
+              // ignore any extra close brackets
               break;
             
             case 3:
-              this.do_cal();
-              this.operator = '+';
-              this.operand = '';
-              this.externalDisplayStr = displayStr.concat('+');
-              this.setState({
-                displayStr: displayStr.concat('+')
-              });
+              this.operatorFn('+', displayStr);         
               break;
 
             case 4:
-              this.operand = this.operand.concat('7');
-              this.externalDisplayStr = displayStr.concat('7');
-              this.setState({
-                displayStr: displayStr.concat('7')
-              });
+              this.operandFn('7', displayStr);             
               break;
 
-            case 5:
-                this.operand = this.operand.concat('8');
-                this.externalDisplayStr = displayStr.concat('8');
-                this.setState({
-                    displayStr: displayStr.concat('8')
-                });
+            case 5:         
+                this.operandFn('8', displayStr);
                 break;
              
             case 6:
-                this.operand = this.operand.concat('9');
-                this.externalDisplayStr = displayStr.concat('9');
-                this.setState({
-                    displayStr: displayStr.concat('9')
-                });
+                this.operandFn('9', displayStr);
                 break;
             
             case 7:
-                this.do_cal();
-                this.operator = '-';
-                this.operand = '';
-                this.externalDisplayStr = displayStr.concat('-');
-                this.setState({
-                    displayStr: displayStr.concat('-')
-                });
+                this.operatorFn('-', displayStr);
                 break;
             
             case 8:
-                this.operand = this.operand.concat('4');
-                this.externalDisplayStr = displayStr.concat('4');
-                this.setState({
-                    displayStr: displayStr.concat('4')
-                });
+                this.operandFn('4', displayStr);
                 break;
             
             case 9:
-                this.operand = this.operand.concat('5');
-                this.externalDisplayStr = displayStr.concat('5');
-                this.setState({
-                    displayStr: displayStr.concat('5')
-                });
+                this.operandFn('5', displayStr);                
                 break;
             
             case 10:
-                this.operand = this.operand.concat('6');
-                this.externalDisplayStr = displayStr.concat('6');
-                this.setState({
-                    displayStr: displayStr.concat('6')
-                });
+                this.operandFn('6', displayStr);                
                 break;
 
             case 11:
-                this.do_cal();
-                this.operator = 'x';
-                this.operand = '';
-                this.externalDisplayStr = displayStr.concat('x');
-                this.setState({
-                    displayStr: displayStr.concat('x')
-                });
+                this.operatorFn('x', displayStr);
+                // otherwise ignore the operator
                 break;
 
             case 12:
-                this.operand = this.operand.concat('1');
-                this.externalDisplayStr = displayStr.concat('1');
-                this.setState({
-                    displayStr: displayStr.concat('1')
-                });
+                this.operandFn('1', displayStr);
                 break;
 
             case 13:
-                this.operand = this.operand.concat('2');
-                this.externalDisplayStr = displayStr.concat('2');
-                this.setState({
-                    displayStr: displayStr.concat('2')
-                });
+                this.operandFn('2', displayStr);
                 break;
             
             case 14:
-                this.operand = this.operand.concat('3');
-                this.externalDisplayStr = displayStr.concat('3');
-                this.setState({
-                    displayStr: displayStr.concat('3')
-                });
+                this.operandFn('3', displayStr);
                 break;
 
             case 15:
-                this.do_cal();
-                this.operator = '/';
-                this.operand = '';
-                this.externalDisplayStr = displayStr.concat('/');
-                this.setState({
-                    displayStr: displayStr.concat('/')
-                });
+                this.operatorFn('/', displayStr);
+                // otherwise ignore the operator
                 break;
 
             case 16:
-                this.operand = this.operand.concat('0');
-                this.externalDisplayStr = displayStr.concat('0');
-                this.setState({
-                    displayStr: displayStr.concat('0')
-                });
+                this.operandFn('0', displayStr);
                 break;
             
             case 17:
-                this.operand = this.operand.concat('.');
-                this.externalDisplayStr = displayStr.concat('.');
-                this.setState({
-                    displayStr: displayStr.concat('.')
-                });
+                this.operandFn('.', displayStr);
                 break;
             
             case 18:
-                this.do_cal();
-                this.operator = '';
-                this.operand = '';
+                this.do_cal();            
                 this.externalDisplayStr = displayStr.concat('=');
                 this.result = this.calc.equals();
+                // this.operand = '';
+                this.operand = this.result.toString();
+                this.operator = '+';
                 this.history = [];
-
                 this.setState({
                     displayStr: ''
                 });
+                this.openB = 0;
                 break;
             default:
         }
